@@ -2,6 +2,10 @@
 var list_shopped = [];
 var list_unshopped = [];
 var status = 0;
+//swipe variables
+var touchorigin;
+var movement;
+var threshold=110;
 
 //when an item is added, it's added into unshopped list
 function createItem(item, list_name)
@@ -157,7 +161,49 @@ window.addEventListener("load",function()
   //load unshopped list
   loadList("unshopped-item", "unshopped");
 
-  //listener for touch on the list of unshopped
+  document.getElementById("unshopped-item").addEventListener("touchstart",function(event)
+  {  //record the touch origin -- this is a global
+    touchorigin = event.touches[0].clientX;
+    var divwidth = getComputedStyle(event.target).width+'px';
+    //set the width of the div
+    event.target.style.width = divwidth;
+  });
+
+  document.getElementById("unshopped-item").addEventListener("touchmove",function(event)
+  {
+    //get the x position of the touch
+    var touchx = event.touches[0].clientX;
+    //calculate how far the swipe has moved
+    movement=touchx-touchorigin;
+    var slide = "translate3D("+movement+"px,0px,0px)";
+    //identify the touch target tag
+    var touchtarget = event.target.tagName;
+    var button = event.target.parentNode.getElementsByTagName('BUTTON')[0];
+
+    if(touchtarget.toLowerCase()=="li"){
+      // event.target.style.transform = slide;
+      if(movement>0){
+        button.style.width = movement+"px";
+      }
+      else if(movement<0){
+        width = button.style.width;
+        button.style.width = width-movement;
+      }
+    }
+  },{passive:true});
+  
+  document.getElementById("unshopped-item").addEventListener("touchend",function(event)
+  {
+    var touchtarget = event.target.tagName;
+    var button = event.target.parentNode.getElementsByTagName('BUTTON')[0];
+    if(touchtarget.toLowerCase()=="div"){
+      if(movement<threshold){
+        button.style.width = '0px';
+      }
+    }
+  },{passive:true});  
+
+ /* //listener for touch on the list of unshopped
   document.getElementById("unshopped-item").addEventListener("touchstart",function(event)
   {
     var startCoordinates = {x:event.changedTouches[0].clientX,
@@ -170,6 +216,8 @@ window.addEventListener("load",function()
         document.getElementById("unshopped-item").removeEventListener('touchend', endHandler, false); 
         if (xDiff >= 100)
         {//assume small movement wasn't intended as swipe
+            //slightly move the task to the rigth and show a delete button
+
             name = event.target.getAttribute("name");
             if (confirm('Are you sure you want to delete ' + name + ' ?'))
             {
@@ -180,7 +228,7 @@ window.addEventListener("load",function()
     };
     document.getElementById("unshopped-item").addEventListener('touchend',endHandler,false);
   });
-
+*/
   //load shopped list
   loadList("shopped-item", "shopped");
   
