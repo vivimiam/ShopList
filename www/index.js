@@ -5,7 +5,13 @@ var status = 0;
 //swipe variables
 var touchorigin;
 var movement;
-var threshold=110;
+var threshold=150;
+//global settings
+var app = {
+  touch:0,
+  movement:0,
+  threshold:150
+}
 
 //when an item is added, it's added into unshopped list
 function createItem(item, list_name)
@@ -87,12 +93,28 @@ function renderList(elm,list_name, list_array)
   {
     item = list_array[i];
     
+    //create the list item
     listitem = document.createElement('LI');
+    //create the div for the text of task
+    listitemcontainer = document.createElement('DIV');
+    //text container to prevent text from shrinking on swipe
+    txtcontainer = document.createElement('DIV');
+    txtcontainer.setAttribute("class","text-container");
+    txtcontainer.setAttribute('data-id',item.id);
+    txtcontainer.setAttribute('data-text',item.name);    
+    //give the text container a class
+    //create the task text using its name
     listtext = document.createTextNode(item.name);
-
-    listitem.appendChild(listtext);
-    listitem.setAttribute("id",item.id);
-    listitem.setAttribute("name", item.name);
+    //create the remove button
+    listbutton = document.createElement('BUTTON');
+    listbutton.setAttribute('data-id',item.id);
+    //add the text into the div element
+    txtcontainer.appendChild(listtext);
+    listitemcontainer.appendChild(txtcontainer);
+    //add the div into the list item
+    listitem.appendChild(listbutton);
+    listitem.appendChild(listitemcontainer);
+    listitem.setAttribute("data-id",item.id);
 
     container.appendChild(listitem);
   }
@@ -130,8 +152,15 @@ function loadList(elm, list_name)
 function removeItem(event, list_name, list_array)
 {
   //item selected
-  id=event.target.getAttribute("id");
-  name=event.target.getAttribute("name");
+  console.log("event", event);
+  console.log("list_name", list_name);
+  console.log("list_array", list_array);
+
+  id=event.target.getAttribute("data-id");
+  name=event.target.getAttribute("data-text");
+  
+  console.log("ID", id);
+  console.log("name", name);
 
   for(i=0;i<list_array.length;i++)
   {
@@ -162,32 +191,33 @@ window.addEventListener("load",function()
   loadList("unshopped-item", "unshopped");
 
   document.getElementById("unshopped-item").addEventListener("touchstart",function(event)
-  {  //record the touch origin -- this is a global
-    touchorigin = event.touches[0].clientX;
-    var divwidth = getComputedStyle(event.target).width+'px';
-    //set the width of the div
-    event.target.style.width = divwidth;
+  { 
+    //record touch x position when it starts
+    app.touch = event.touches[0].clientX;    
   });
 
   document.getElementById("unshopped-item").addEventListener("touchmove",function(event)
   {
     //get the x position of the touch
     var touchx = event.touches[0].clientX;
-    //calculate how far the swipe has moved
-    movement=touchx-touchorigin;
-    var slide = "translate3D("+movement+"px,0px,0px)";
+    //calculate how far the swipe has moved by subtracting app.touch(the origin point) from current touch position
+    app.movement=touchx-app.touch;
+
     //identify the touch target tag
     var touchtarget = event.target.tagName;
-    var button = event.target.parentNode.getElementsByTagName('BUTTON')[0];
 
-    if(touchtarget.toLowerCase()=="li"){
-      // event.target.style.transform = slide;
-      if(movement>0){
-        button.style.width = movement+"px";
+    //since the target is the text-container we need to get the parent of its parent
+    //=the li element, then get to the button (the button is created on renderList function)
+    var button = event.target.parentNode.parentNode.getElementsByTagName('BUTTON')[0];
+    //only move element if target is a div
+    if(touchtarget.toLowerCase()=="div"){
+      if(app.movement>0 && app.movement<=app.threshold+50){
+        //if movement is less than the threshold
+        button.style.width = app.movement+"px";
       }
-      else if(movement<0){
-        width = button.style.width;
-        button.style.width = width-movement;
+      else if(app.movement<0){
+        width = parseFloat(button.style.width,10);
+        button.style.width = app.threshold+app.movement+"px";
       }
     }
   },{passive:true});
@@ -195,66 +225,95 @@ window.addEventListener("load",function()
   document.getElementById("unshopped-item").addEventListener("touchend",function(event)
   {
     var touchtarget = event.target.tagName;
-    var button = event.target.parentNode.getElementsByTagName('BUTTON')[0];
+    //since the target is the text-container we need to get the parent of its parent
+    //=the li element, then get to the button
+    var button = event.target.parentNode.parentNode.getElementsByTagName('BUTTON')[0];
+    //only move element if target is a div
     if(touchtarget.toLowerCase()=="div"){
-      if(movement<threshold){
+      //if swipe right goes beyond the threshold
+      if(app.movement>=app.threshold){
+        button.style.width = app.threshold;
+      }
+      //if swipe right does not go beyond threshold, change button back to 0 width
+      if(app.movement<app.threshold && app.movement>0){
+        button.style.width = '0px';
+      }
+      //if swipe left (movement<0) and it is smaller than threshold snap button back to 0
+      else if(app.movement<0 && app.movement<app.threshold){
         button.style.width = '0px';
       }
     }
-  },{passive:true});  
 
- /* //listener for touch on the list of unshopped
-  document.getElementById("unshopped-item").addEventListener("touchstart",function(event)
-  {
-    var startCoordinates = {x:event.changedTouches[0].clientX,
-                            y:event.changedTouches[0].clientY};
-    var endHandler = function(event)
-    {
-        var xDiff = Math.abs(Math.abs(startCoordinates.x) - 
-                             Math.abs(event.changedTouches[0].clientX));
-        //unbind handler, avoid double listeners
-        document.getElementById("unshopped-item").removeEventListener('touchend', endHandler, false); 
-        if (xDiff >= 100)
-        {//assume small movement wasn't intended as swipe
-            //slightly move the task to the rigth and show a delete button
+    //if touchtarget is a button
+    if(touchtarget.toLowerCase()=="button"){
+      var taskid = event.target.parentNode.getAttribute('data-id');
+      removeItem(event, "unshopped", list_unshopped);  
+    }
+  },{passive:true}); 
 
-            name = event.target.getAttribute("name");
-            if (confirm('Are you sure you want to delete ' + name + ' ?'))
-            {
-              //remove item from shopped list
-              removeItem(event, "unshopped", list_unshopped);               
-            }
-        }
-    };
-    document.getElementById("unshopped-item").addEventListener('touchend',endHandler,false);
-  });
-*/
-  //load shopped list
+   //load unshopped list
   loadList("shopped-item", "shopped");
-  
-  //listener for touch on the list of shopped
+
   document.getElementById("shopped-item").addEventListener("touchstart",function(event)
+  { 
+    //record touch x position when it starts
+    app.touch = event.touches[0].clientX;    
+  });
+
+  document.getElementById("shopped-item").addEventListener("touchmove",function(event)
   {
-    var startCoordinates = {x:event.changedTouches[0].clientX,
-                            y:event.changedTouches[0].clientY};
-    var endHandler = function(event)
-    {
-        var xDiff = Math.abs(Math.abs(startCoordinates.x) - 
-                             Math.abs(event.changedTouches[0].clientX));
-        //unbind handler, avoid double listeners
-        document.getElementById("shopped-item").removeEventListener('touchend', endHandler, false); 
-        if (xDiff >= 100)
-        {//assume small movement wasn't intended as swipe
-            name = event.target.getAttribute("name");
-            if (confirm('Are you sure you want to delete ' + name + ' ?'))
-            {
-              //remove item from shopped list
-              removeItem(event, "shopped", list_shopped);               
-            }
-        }
-    };
-    document.getElementById("shopped-item").addEventListener('touchend',endHandler,false);
-  });  
+    //get the x position of the touch
+    var touchx = event.touches[0].clientX;
+    //calculate how far the swipe has moved by subtracting app.touch(the origin point) from current touch position
+    app.movement=touchx-app.touch;
+
+    //identify the touch target tag
+    var touchtarget = event.target.tagName;
+
+    //since the target is the text-container we need to get the parent of its parent
+    //=the li element, then get to the button (the button is created on renderList function)
+    var button = event.target.parentNode.parentNode.getElementsByTagName('BUTTON')[0];
+    //only move element if target is a div
+    if(touchtarget.toLowerCase()=="div"){
+      if(app.movement>0 && app.movement<=app.threshold+50){
+        //if movement is less than the threshold
+        button.style.width = app.movement+"px";
+      }
+      else if(app.movement<0){
+        width = parseFloat(button.style.width,10);
+        button.style.width = app.threshold+app.movement+"px";
+      }
+    }
+  },{passive:true});
+  
+  document.getElementById("shopped-item").addEventListener("touchend",function(event)
+  {
+    var touchtarget = event.target.tagName;
+    //since the target is the text-container we need to get the parent of its parent
+    //=the li element, then get to the button
+    var button = event.target.parentNode.parentNode.getElementsByTagName('BUTTON')[0];
+    //only move element if target is a div
+    if(touchtarget.toLowerCase()=="div"){
+      //if swipe right goes beyond the threshold
+      if(app.movement>=app.threshold){
+        button.style.width = app.threshold;
+      }
+      //if swipe right does not go beyond threshold, change button back to 0 width
+      if(app.movement<app.threshold && app.movement>0){
+        button.style.width = '0px';
+      }
+      //if swipe left (movement<0) and it is smaller than threshold snap button back to 0
+      else if(app.movement<0 && app.movement<app.threshold){
+        button.style.width = '0px';
+      }
+    }
+
+    //if touchtarget is a button
+    if(touchtarget.toLowerCase()=="button"){
+      var taskid = event.target.parentNode.getAttribute('data-id');
+      removeItem(event, "shopped", list_shopped);  
+    }
+  },{passive:true}); 
 
   document.getElementById("unshopped-item").addEventListener("touchstart", tapHandlerUnshopped);
 

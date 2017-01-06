@@ -49,7 +49,7 @@ main {
   overflow-y: auto;
 }
 .unshopped li {
-  padding: 3px;
+  padding: 0px;
   font-size: 20px;
   color: #808080;
   transition: all 0.5s;
@@ -57,13 +57,15 @@ main {
   border-bottom: 1px solid #cccccc;
   box-shadow: 0 2px 4px #333;
   overflow-y: auto;
+  display: flex;
+  flex-direction: row;
 }
 .unshopped li:active {
   box-shadow: 0 2px 4px #333;
 }
 
 .unshopped li button {
-  background-color: #0c7cd5;
+  background-color: grey;
   background-image: url('images/tick.png');
   background-size: 30px;
   background-position: center center;
@@ -74,6 +76,19 @@ main {
   background-repeat: no-repeat;
   outline: 0;
   border: 0;
+}
+
+.unshopped li > div {
+  background: white;
+  padding: 5px;
+  word-wrap: break-word;
+  flex: 1 0 0;
+  flex-shrink: 0;
+  overflow-x: hidden;
+}
+
+.unshopped li > div .text-container {
+  min-width: 100vw;
 }
 
 .unshopped ul
@@ -109,21 +124,51 @@ main {
   border-bottom: 1px solid #cccccc;
   box-shadow: 0 2px 4px #333;
   overflow-y: auto;
+   display: flex;
+  flex-direction: row; 
   text-decoration: line-through;  
 }
+
 .shopped li:active {
   box-shadow: 0 2px 4px #333;
 }
 
+
+.shopped li button {
+  background-color: grey;
+  background-image: url('images/tick.png');
+  background-size: 30px;
+  background-position: center center;
+  overflow: hidden;
+  max-width: 150px;
+  width: 0;
+  padding: 0;
+  background-repeat: no-repeat;
+  outline: 0;
+  border: 0;
+}
+
+.shopped li > div {
+  background: white;
+  padding: 5px;
+  word-wrap: break-word;
+  flex: 1 0 0;
+  flex-shrink: 0;
+  overflow-x: hidden;
+}
+
+.shopped li > div .text-container {
+  min-width: 100vw;
+}
+
 .shopped ul
 {
-  overflow-y: auto;
-  padding-top: 20px;
   margin: 0;
   padding: 0;
-  margin-bottom: 23px;
-  margin-top: 35px;
+  margin-bottom: 20px;
+  padding-top: 35px;
 }
+
 
 footer {
   position: absolute;
