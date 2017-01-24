@@ -175,7 +175,7 @@ function removeItem(event, list_name, list_array)
   }
 }
 
-function getPosition(event)
+function touchStart(event)
 { 
    	//record touch x position when it starts
    	app.touch = event.touches[0].clientX;    
@@ -219,111 +219,92 @@ function addInput(event)
   }
 }
 
+var tapedTwice = false;
+
+function tapHandlerList(list_name, event) {
+	console.log("tapedTwice", tapedTwice);
+	console.log("list_name", list_name);
+	if(!tapedTwice) {
+    	tapedTwice = true;
+        setTimeout( function() { tapedTwice = false; }, 300 );
+        return false;
+    }
+    if (list_name == "unshopped")
+    {
+    	removeItem(event, list_name, list_unshopped); 	
+    	//create item 
+    	createItem(name, "shopped"); 
+	}else
+	{
+    	removeItem(event, list_name, list_shopped); 
+    	//create item 
+    	createItem(name, "unshopped");   
+    }   
+}
+
+
+function touchEnd(list_name, event)
+{
+	var touchtarget = event.target.tagName;
+   	//since the target is the text-container we need to get the parent of its parent
+   	//=the li element, then get to the button
+   	var button = event.target.parentNode.parentNode.getElementsByTagName('BUTTON')[0];
+   	//only move element if target is a div
+   	if(touchtarget.toLowerCase()=="div"){
+		//if swipe right goes beyond the threshold
+    	if(app.movement>=app.threshold){
+    		button.style.width = app.threshold;
+   		}
+      	//if swipe right does not go beyond threshold, change button back to 0 width
+	    if(app.movement<app.threshold && app.movement>0){
+    		button.style.width = '0px';
+      	}
+      	//if swipe left (movement<0) and it is smaller than threshold snap button back to 0
+      	else if(app.movement<0 && app.movement<app.threshold){
+       		button.style.width = '0px';
+   		}
+   	}
+
+    //if touchtarget is a button
+	if(touchtarget.toLowerCase()=="button"){
+    	var taskid = event.target.parentNode.getAttribute('data-id');   	
+    	if (list_name == "unshopped")
+    	{
+      		removeItem(event, "unshopped", list_unshopped);  
+      	}else
+    	{
+    		removeItem(event, "shopped", list_shopped);
+    	}  	
+    }
+}
+
 window.addEventListener("load",function()
 {
   	addCordovaEvents();
 
-	//add item from input form into unshopped list
-	document.getElementById("input-form").addEventListener("submit",addInput);
+  	//add item from input form into unshopped list
+  	document.getElementById("input-form").addEventListener("submit", addInput); 
 
   	//load unshopped list
   	loadList("unshopped-item", "unshopped");
-	document.getElementById("unshopped-item").addEventListener("touchstart",getPosition);
+	document.getElementById("unshopped-item").addEventListener("touchstart",touchStart);
+	document.getElementById("unshopped-item").addEventListener("touchstart", function() {
+    	tapHandlerList("unshopped", event);});
 	document.getElementById("unshopped-item").addEventListener("touchmove", checkToDelete);
+  	document.getElementById("unshopped-item").addEventListener("touchend", function() {
+    	touchEnd("unshopped", event);}); 	
 
   	//load shopped list
   	loadList("shopped-item", "shopped");
-	document.getElementById("shopped-item").addEventListener("touchstart",getPosition);
+	document.getElementById("shopped-item").addEventListener("touchstart",touchStart);
+	document.getElementById("shopped-item").addEventListener("touchstart", function() {
+    	tapHandlerList("shopped", event);});
 	document.getElementById("shopped-item").addEventListener("touchmove", checkToDelete);
-
-  	document.getElementById("unshopped-item").addEventListener("touchend",function(event)
-  	{
-	 	var touchtarget = event.target.tagName;
-   		//since the target is the text-container we need to get the parent of its parent
-   		//=the li element, then get to the button
-   		var button = event.target.parentNode.parentNode.getElementsByTagName('BUTTON')[0];
-   		//only move element if target is a div
-   		if(touchtarget.toLowerCase()=="div"){
-	    	//if swipe right goes beyond the threshold
-    		if(app.movement>=app.threshold){
-    			button.style.width = app.threshold;
-   			}
-      		//if swipe right does not go beyond threshold, change button back to 0 width
-	      	if(app.movement<app.threshold && app.movement>0){
-    	    	button.style.width = '0px';
-      		}
-      		//if swipe left (movement<0) and it is smaller than threshold snap button back to 0
-      		else if(app.movement<0 && app.movement<app.threshold){
-       			button.style.width = '0px';
-   			}
-   		}
-
-    	//if touchtarget is a button
-	    if(touchtarget.toLowerCase()=="button"){
-    	  var taskid = event.target.parentNode.getAttribute('data-id');
-      		removeItem(event, "unshopped", list_unshopped);  
-    	}
-  	},{passive:true}); 
-
-  	document.getElementById("shopped-item").addEventListener("touchend",function(event)
-  	{
-	 	var touchtarget = event.target.tagName;
-   		//since the target is the text-container we need to get the parent of its parent
-   		//=the li element, then get to the button
-   		var button = event.target.parentNode.parentNode.getElementsByTagName('BUTTON')[0];
-   		//only move element if target is a div
-   		if(touchtarget.toLowerCase()=="div"){
-	    	//if swipe right goes beyond the threshold
-    		if(app.movement>=app.threshold){
-    			button.style.width = app.threshold;
-   			}
-      		//if swipe right does not go beyond threshold, change button back to 0 width
-	      	if(app.movement<app.threshold && app.movement>0){
-    	    	button.style.width = '0px';
-      		}
-      		//if swipe left (movement<0) and it is smaller than threshold snap button back to 0
-      		else if(app.movement<0 && app.movement<app.threshold){
-       			button.style.width = '0px';
-   			}
-   		}
-
-    	//if touchtarget is a button
-	    if(touchtarget.toLowerCase()=="button"){
-    	  var taskid = event.target.parentNode.getAttribute('data-id');
-      		removeItem(event, "shopped", list_shopped);  
-    	}
- 	},{passive:true});  
-
-  	document.getElementById("unshopped-item").addEventListener("touchstart", tapHandlerUnshopped);
-  	var tapedTwice = false;
-  	function tapHandlerUnshopped(event) {
-    	if(!tapedTwice) {
-        	tapedTwice = true;
-          	setTimeout( function() { tapedTwice = false; }, 300 );
-          	return false;
-      	}
-      	event.preventDefault();
-      	removeItem(event, "unshopped", list_unshopped); 
-      	//create item in shopped list
-      	createItem(name, "shopped");      
-   	}  
-
-  	document.getElementById("shopped-item").addEventListener("touchstart", tapHandlerShopped);
-  	var tapedTwice = false;
-  	function tapHandlerShopped(event) {
-    	if(!tapedTwice) {
-        	tapedTwice = true;
-          	setTimeout( function() { tapedTwice = false; }, 300 );
-          	return false;
-      	}
-      	event.preventDefault();
-      	removeItem(event, "shopped", list_shopped); 
-      	//create item in unshopped list
-      	createItem(name, "unshopped");      
-   	}  
+  	document.getElementById("shopped-item").addEventListener("touchend", function() {
+    	touchEnd("shopped", event);}); 
 
 });
-
+  
 
 function addCordovaEvents(){
   document.addEventListener("deviceready",onDeviceReady,false);
