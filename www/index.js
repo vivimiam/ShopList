@@ -13,166 +13,96 @@ var app = {
   threshold:150
 }
 
+var userId;
+var listsRef;
+var containerShopped = document.getElementById("shopped-item");
+containerShopped.innerHTML="";
+
+var containerUnshopped = document.getElementById("unshopped-item");
+containerUnshopped.innerHTML="";
+
 //when an item is added, it's added into unshopped list
-function createItem(item, list_name)
+function createItem(item)
 {
-  id = new Date().getTime();
-  name = item;
+  	listsRef.child(item).once('value', function(snapshot) {	
+    	if (snapshot.val() == null)
+    	{
+			listsRef.child(item).set(0);
 
-  //Check if the item already exists in both lists
-  status = 0;
-  checkExits(name, "Unshopped", list_unshopped);
-  checkExits(name, "Shopped", list_shopped);
-  
-  if(status == 0)
-  {
-    if (list_name == "unshopped")
-    {
-      unshopped ={id:id,name:name};
-      list_unshopped.push(unshopped);  
-      renderList("unshopped-item", "unshopped", list_unshopped);
-    }
-    else
-    {
-      shopped ={id:id,name:name};
-      list_shopped.push(shopped);  
-      renderList("shopped-item", "shopped", list_shopped);    
-    }
-  }
+			containerShopped.innerHTML="";
+			containerUnshopped.innerHTML="";
+			loadList();
+		}
+    	else
+    	{
+    		if (snapshot.val() == 0)
+	    	{
+    			alert("Item already exists on unshopped list!");
+    		}
+    		else
+    		{
+     			alert("Item already exists on shopped list!");   		
+    		}
+    	}
+  });  
 }
 
-
-//chech if the item already exists on shopped and unshopped lists
-function checkExits(name, list_name, list_array)
+function showItem(key, val)
 {
-  for(i=0;i<list_array.length;i++)
-  {
-    if(list_array[i].name == name)
-    {
-      alert("Item already exists on " + list_name + " list!");
-      status = 1;
-      break;
-    }
-  }
+    		//create the list item
+    		listitem = document.createElement('LI');
+    		//create the div for the text of task
+    		listitemcontainer = document.createElement('DIV');
+		    //text container to prevent text from shrinking on swipe
+		    txtcontainer = document.createElement('DIV');
+		    txtcontainer.setAttribute("class","text-container");
+		    txtcontainer.setAttribute('data-id',key);
+		    txtcontainer.setAttribute('data-text',key);    
+		    //give the text container a class
+		    //create the task text using its name
+		    listtext = document.createTextNode(key);
+		    //create the remove button
+		    listbutton = document.createElement('BUTTON');
+		    listbutton.setAttribute('data-id',key);
+		    //add the text into the div element
+		    txtcontainer.appendChild(listtext);
+		    listitemcontainer.appendChild(txtcontainer);
+    		//add the div into the list item
+		    listitem.appendChild(listbutton);
+		    listitem.appendChild(listitemcontainer);
+		    listitem.setAttribute("data-id",key);
+
+		    if ((val == 0) || (val == 1))
+		    {
+  				if (val == 0) //unshopped item
+  				{
+			    	containerUnshopped.appendChild(listitem);
+  				}
+  				else //shopped item
+  				{
+		    		containerShopped.appendChild(listitem);
+  				}
+  			}	
 }
 
-//add the array into the local storage
-function saveList(list_name, list_array)
-{
-  if(window.localStorage)
-  {
-    localStorage.setItem(list_name,JSON.stringify(list_array));
-  }
-}
-
-//update the list after having the item added
-function renderList(elm,list_name, list_array)
-{
-  var container = document.getElementById(elm);
-  saveList(list_name, list_array);
-
-  // sort by name
-  list_array.sort(function(a, b) 
-  {
-    var nameA = a.name.toUpperCase(); // ignore upper and lowercase
-    var nameB = b.name.toUpperCase(); // ignore upper and lowercase
-    if (nameA < nameB) {
-      return -1;
-    }
-    if (nameA > nameB) {
-      return 1;
-    }
-
-    // names must be equal
-    return 0;
+function writeListData(email) {
+  firebase.database().ref('users/' + userId).set({
+    email: email
   });
-
-  container.innerHTML="";
-  itemstotal = list_array.length;
-  for(i=0;i<itemstotal;i++)
-  {
-    item = list_array[i];
-    
-    //create the list item
-    listitem = document.createElement('LI');
-    //create the div for the text of task
-    listitemcontainer = document.createElement('DIV');
-    //text container to prevent text from shrinking on swipe
-    txtcontainer = document.createElement('DIV');
-    txtcontainer.setAttribute("class","text-container");
-    txtcontainer.setAttribute('data-id',item.id);
-    txtcontainer.setAttribute('data-text',item.name);    
-    //give the text container a class
-    //create the task text using its name
-    listtext = document.createTextNode(item.name);
-    //create the remove button
-    listbutton = document.createElement('BUTTON');
-    listbutton.setAttribute('data-id',item.id);
-    //add the text into the div element
-    txtcontainer.appendChild(listtext);
-    listitemcontainer.appendChild(txtcontainer);
-    //add the div into the list item
-    listitem.appendChild(listbutton);
-    listitem.appendChild(listitemcontainer);
-    listitem.setAttribute("data-id",item.id);
-
-    container.appendChild(listitem);
-  }
 }
 
 //load local Storage accordingly with the list_name (can be "unshopped" or "shopped")
-function loadList(elm, list_name)
+function loadList()
 {
-  if(window.localStorage)
-  {
-    try
-    {
-      if(JSON.parse(localStorage.getItem(list_name)))
-      {
-        if (list_name == "unshopped")
-        {
-          list_unshopped = JSON.parse(localStorage.getItem(list_name));
-          renderList(elm, list_name, list_unshopped);
-        }
-        else
-        {
-          list_shopped = JSON.parse(localStorage.getItem(list_name));
-          renderList(elm, list_name, list_shopped);
-        }
-      }
-    }
-    catch(error)
-    {
-      console.log("error"+error);
-    }
-  }
-}
-
-
-function removeItem(event, list_name, list_array)
-{
-  //item selected
-  id=event.target.getAttribute("data-id");
-  name=event.target.getAttribute("data-text");
-  
-  for(i=0;i<list_array.length;i++)
-  {
-    if(list_array[i].id == id)
-    {
-      //Delete the selected item from the list
-      list_array.splice(i,1);
-
-      if (list_name == "unshopped")
-      {
-         elm = "unshopped-item";
-      }
-      else
-      {
-        elm = "shopped-item";
-      }
-      renderList(elm, list_name, list_array);
-    }
-  }
+	if (userId)
+	{	
+		listsRef = firebase.database().ref("lists/" + userId);
+		listsRef.orderByKey().once("value", function(snapshot) {		
+  		snapshot.forEach(function(data) {
+  			showItem(data.key, data.val());
+  		});
+	});
+	}
 }
 
 function touchStart(event)
@@ -209,36 +139,46 @@ function checkToDelete(event)
 
 function addInput(event)
 {
- event.preventDefault();
-  //get task input value
-  item = document.getElementById("item-input").value;
-  if (item.trim() != "")
-  {
-    createItem(item, "unshopped");
-    document.getElementById("input-form").reset();
-  }
+	event.preventDefault();
+  	//get task input value
+  	item = document.getElementById("item-input").value;
+  	if (item.trim() != "")
+  	{
+    	createItem(item);
+    	document.getElementById("input-form").reset();
+  	}
 }
 
 var tapedTwice = false;
 
 function tapHandlerList(list_name, event) {
-	console.log("tapedTwice", tapedTwice);
-	console.log("list_name", list_name);
+	//update list (status)
 	if(!tapedTwice) {
     	tapedTwice = true;
         setTimeout( function() { tapedTwice = false; }, 300 );
         return false;
     }
-    if (list_name == "unshopped")
+
+  	id=event.target.getAttribute("data-id");
+
+    if (list_name == "unshopped") //status 0
     {
-    	removeItem(event, list_name, list_unshopped); 	
-    	//create item 
-    	createItem(name, "shopped"); 
-	}else
+    	itemUpdated = {}; 
+		itemUpdated[id] = 1;
+    	listsRef.update(itemUpdated);
+		containerShopped.innerHTML="";
+		containerUnshopped.innerHTML="";
+		loadList();
+
+	}
+	else //status 1
 	{
-    	removeItem(event, list_name, list_shopped); 
-    	//create item 
-    	createItem(name, "unshopped");   
+    	itemUpdated = {}; 
+		itemUpdated[id] = 0;
+    	listsRef.update(itemUpdated);
+		containerShopped.innerHTML="";
+		containerUnshopped.innerHTML="";
+		loadList();
     }   
 }
 
@@ -268,25 +208,155 @@ function touchEnd(list_name, event)
     //if touchtarget is a button
 	if(touchtarget.toLowerCase()=="button"){
     	var taskid = event.target.parentNode.getAttribute('data-id');   	
-    	if (list_name == "unshopped")
-    	{
-      		removeItem(event, "unshopped", list_unshopped);  
-      	}else
-    	{
-    		removeItem(event, "shopped", list_shopped);
-    	}  	
+
+  		listsRef.once("value").then(function(snapshot) {
+    		snapshot.forEach(function(child) {
+    			if (child.key == taskid)
+    			{
+		        	child.ref.remove();
+					containerShopped.innerHTML="";
+					containerUnshopped.innerHTML="";
+					loadList();
+		        }
+		    });
+      });
     }
+}
+
+function showForm(evt){
+  evt.preventDefault();
+  var id = evt.target.id;
+  if(id==='signup-link'){
+    var hideelm = document.getElementById('login');
+    hideelm.style.visibility='hidden';
+    hideelm.style.height=0;
+    var showelm = document.getElementById('signup');
+    showelm.style.visibility='visible';
+    showelm.style.height='auto';
+  }
+  if(id==='login-link'){
+    var hideelm = document.getElementById('signup');
+    hideelm.style.visibility='hidden';
+    hideelm.style.height=0;
+    var showelm = document.getElementById('login');
+    showelm.style.visibility='visible';
+    showelm.style.height='auto';
+  }
+}
+
+function toggleOverlayVisibility(status){
+
+  if(status=='show'){
+    document.getElementById('overlay').style.visibility='visible';
+    document.getElementById('login').style.visibility = 'visible';
+    document.getElementById('signup').style.visibility = 'hidden';
+  }
+  if(status=='hide'){
+    document.getElementById('overlay').style.visibility='hidden';
+    document.getElementById('login').style.visibility = 'hidden';
+    document.getElementById('signup').style.visibility = 'hidden';
+  }
+}
+function getData(e){
+  e.preventDefault();
+  var id = e.target.id;
+  var formData = new FormData(document.getElementById(id));
+  e.target.reset();
+  if(id=='signup-form'){
+    signUpUser(formData.get('email'),formData.get('password'));
+  }
+  if(id=='login-form'){
+    signInUser(formData.get('email'),formData.get('password'));
+  }
+}
+
+function signUpUser(email,password){
+  firebase.auth().createUserWithEmailAndPassword(email, password)
+  .then(function(){
+  	//access the database and insert the current user
+	userId = firebase.auth().currentUser.uid;
+	var email = firebase.auth().currentUser.email;
+	writeListData(email);
+    loadList(); 
+  })
+  .catch(function(error) {
+  // Handle Errors here.
+    var errorCode = error.code;
+    var errorMessage = error.message;
+    console.log(error);
+  });
+}
+
+function signInUser(email,password){
+  firebase.auth().signInWithEmailAndPassword(email, password)
+  .then(function (snapshot) {
+  	//access the database and select the current user
+	userId = firebase.auth().currentUser.uid;	
+    loadList();  		
+  })
+  .catch(function(error) {
+    // Handle Errors here.
+    var errorCode = error.code;
+    var errorMessage = error.message;
+    // ...
+  });
+}
+function signOutUser(){
+	containerUnshopped.innerHTML="";
+	containerShopped.innerHTML="";
+  	firebase.auth().signOut().then(function() {
+  	// Sign-out successful
+    	toggleOverlayVisibility('show');
+    	var hideelm = document.getElementById('signup');
+    	hideelm.style.visibility='hidden';
+    	hideelm.style.height=0;
+    	var showelm = document.getElementById('login');
+    	showelm.style.visibility='visible';
+    	showelm.style.height='auto';
+
+  	}, function(error) {
+   		// An error happened.
+  	});
 }
 
 window.addEventListener("load",function()
 {
   	addCordovaEvents();
 
+	//add firebase auth observer
+  	firebase.auth().onAuthStateChanged(function(user) {
+    	if (user) {
+      		//user is logged in
+      		//hide the overlay
+      		toggleOverlayVisibility('hide');
+      		//hide menu items
+      		document.getElementById('user-login').style.display='none';
+      		document.getElementById('user-signup').style.display='none';
+      		document.getElementById('user-logout').style.display='flex';      		
+    	}
+    	else{
+      		toggleOverlayVisibility('show');
+      		//user is logged out
+      		//hide the logout button
+      		document.getElementById('user-login').style.display='flex';
+      		document.getElementById('user-signup').style.display='flex';      		
+      		document.getElementById('user-logout').style.display='none'; 
+    	}
+
+  	});
+  	//listeners for form switcher
+  	document.getElementById('signup-link').addEventListener('click',showForm);
+  	document.getElementById('login-link').addEventListener('click',showForm);
+  	//sign up user
+  	document.getElementById('signup-form').addEventListener('submit',getData);
+  	document.getElementById('login-form').addEventListener('submit',getData);
+  	//add listeners to main navigation functions
+  	//--logout
+  	document.getElementById('user-logout').addEventListener('click',signOutUser);  	
+
   	//add item from input form into unshopped list
   	document.getElementById("input-form").addEventListener("submit", addInput); 
 
-  	//load unshopped list
-  	loadList("unshopped-item", "unshopped");
 	document.getElementById("unshopped-item").addEventListener("touchstart",touchStart);
 	document.getElementById("unshopped-item").addEventListener("touchstart", function() {
     	tapHandlerList("unshopped", event);});
@@ -294,8 +364,6 @@ window.addEventListener("load",function()
   	document.getElementById("unshopped-item").addEventListener("touchend", function() {
     	touchEnd("unshopped", event);}); 	
 
-  	//load shopped list
-  	loadList("shopped-item", "shopped");
 	document.getElementById("shopped-item").addEventListener("touchstart",touchStart);
 	document.getElementById("shopped-item").addEventListener("touchstart", function() {
     	tapHandlerList("shopped", event);});
@@ -316,8 +384,8 @@ function onDeviceReady(){
     saveList("shopped", list_shopped);
   },false);
   document.addEventListener("resume",function(){
-    loadList("unshopped-item", "unshopped");
-    loadList("shopped-item", "shopped")
+    loadList();
+    loadList()
   },false);
   document.addEventListener("backbutton",function(){
     saveList("unshopped", list_unshopped);

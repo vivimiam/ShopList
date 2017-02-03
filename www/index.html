@@ -3,12 +3,39 @@
 	<head>
 		<title>My Shopping List</title>
 		<meta charset="utf-8" name="viewport" content="width=device-width, height=device-height, initial-scale=1.0">
+		<script src="https://www.gstatic.com/firebasejs/3.6.6/firebase.js"></script>
+		<script>
+  			// Initialize Firebase
+  			var config = {
+	    		apiKey: "AIzaSyCQX5ftyOy1zKINreaXwYQEQBMHSJ59tj8",
+    			authDomain: "shoppinglist-b3d7a.firebaseapp.com",
+    			databaseURL: "https://shoppinglist-b3d7a.firebaseio.com",
+	    		storageBucket: "shoppinglist-b3d7a.appspot.com",
+    			messagingSenderId: "240247127441"
+  			};
+  			firebase.initializeApp(config);
+		</script>
 		<link rel="stylesheet" type="text/css" href="index.css">
 	</head>
 	<body>
 		<div class="app">
 		<header>
-			<h1>My Shopping List</h1>
+        	<div class="logo">
+				<h1>My Shopping List</h1>
+	        </div>			
+	        <div class="user">
+	        	<ul class="authmenu">
+	            	<li>
+	              		<a href="#" id="user-login">Login</a>
+	            	</li>
+	            	<li>
+	              		<a href="#" id="user-signup">Signup</a>
+	            	</li>
+	            	<li>
+	              		<a href="#" id="user-logout">Logout</a>
+	            	</li>
+	          	</ul>
+	        </div>			
 		</header>
 		<main>
 			<div class="unshopped">
@@ -45,9 +72,9 @@
           		<div class="form" id="signup">
             		<form id="signup-form">
               			<h1>Sign up</h1>
-		                <label for="email">Email</label>
+		                <label for="login-email">Email</label>
             			<input type="email" name="email" id="signup-email" placeholder="you@domain.com">
-            			<label for="password">Password</label>
+            			<label for="login-password">Password</label>
               			<input type="password" name="password" id="signup-password" placeholder="choose a password">
               			<div class="form-submit">
                 			<button class="submit-btn" role="submit" id="signup-btn">Sign up</button>
