@@ -14,7 +14,10 @@ var app = {
 }
 
 var userId;
+var listsRoot;
 var listsRef;
+var usersRef;
+var sharedKey;
 var containerShopped = document.getElementById("shopped-item");
 containerShopped.innerHTML="";
 
@@ -96,7 +99,18 @@ function loadList()
 {
 	if (userId)
 	{	
+		//find all lists shared with this user
+		listsRoot = firebase.database().ref("lists");
+		listsRoot.orderByChild(userId).equalTo('shared').once('value', function(snapshot){
+			snapshot.forEach(function(child){
+				//show list of lists
+				//on click button: set listsRef = lists/+userId
+				console.log("user", child.key);
+			});
+		});
+
 		listsRef = firebase.database().ref("lists/" + userId);
+		usersRef = firebase.database().ref("users");
 		listsRef.orderByKey().once("value", function(snapshot) {		
   		snapshot.forEach(function(data) {
   			showItem(data.key, data.val());
@@ -244,6 +258,17 @@ function showForm(evt){
   }
 }
 
+function toggleShareVisibility(status){
+  if(status=='show'){
+    document.getElementById('share').style.visibility='visible';    
+    document.getElementById('shared').style.visibility='visible';
+  }
+  if(status=='hide'){
+    document.getElementById('share').style.visibility='hidden';
+    document.getElementById('shared').style.visibility='hidden';
+  }
+}
+
 function toggleOverlayVisibility(status){
 
   if(status=='show'){
@@ -257,6 +282,7 @@ function toggleOverlayVisibility(status){
     document.getElementById('signup').style.visibility = 'hidden';
   }
 }
+
 function getData(e){
   e.preventDefault();
   var id = e.target.id;
@@ -319,12 +345,47 @@ function signOutUser(){
   	});
 }
 
+function shareData(e)
+{
+	e.preventDefault();
+	toggleShareVisibility('hide');
+	var id = e.target.id;
+  	var formData = new FormData(document.getElementById(id));
+  	e.target.reset();
+
+  	var email = formData.get('email');
+
+	usersRef.orderByChild("email").equalTo(email).once("value", function(snapshot) {
+        snapshot.forEach(function(child) {
+        	if (child.val() != null)
+        	{
+            	sharedKey = child.key;
+			  	listsRef.child(sharedKey).once('value', function(snapshot) {	
+    				if (snapshot.val() == null)
+	    			{
+						listsRef.child(sharedKey).set('shared');
+					}
+	    			else
+		    		{
+    					alert("List already shared with: " + email);
+    				}
+    			});
+    		}
+    		else
+    		{
+  				alert("There is no user for: " + email);
+    		}
+  		});
+  	});
+}
+
 window.addEventListener("load",function()
 {
   	addCordovaEvents();
 
 	//add firebase auth observer
   	firebase.auth().onAuthStateChanged(function(user) {
+  		toggleShareVisibility('hide');
     	if (user) {
       		//user is logged in
       		//hide the overlay
@@ -355,7 +416,14 @@ window.addEventListener("load",function()
   	document.getElementById('user-logout').addEventListener('click',signOutUser);  	
 
   	//add item from input form into unshopped list
-  	document.getElementById("input-form").addEventListener("submit", addInput); 
+  	document.getElementById("btnadd").addEventListener("click", addInput); 
+
+  	//add item from input form into unshopped list
+  	document.getElementById("btnshare").addEventListener("click", function(){
+  		toggleShareVisibility('show');
+  	});
+
+  	document.getElementById('share-form').addEventListener('submit',shareData);  	
 
 	document.getElementById("unshopped-item").addEventListener("touchstart",touchStart);
 	document.getElementById("unshopped-item").addEventListener("touchstart", function() {

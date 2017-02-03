@@ -51,7 +51,8 @@
 		<footer>
 			<form id="input-form">
 				<input type="text" name="item-input" id="item-input">
-				<button>+</button>
+				<button class="btnadd" id="btnadd">+</button>
+				<button class="btnshare" id="btnshare">S</button>
 			</form>
 		</footer>
       	<div id="overlay">
@@ -80,6 +81,19 @@
                 			<button class="submit-btn" role="submit" id="signup-btn">Sign up</button>
               			</div>
               			<p class="form-switch">Already have an account? <a href="#" id="login-link">Log in</a></p>
+            		</form>
+          		</div>
+        	</div>
+      	<div id="share">
+        	<div class="form-container">
+          		<div class="form" id="shared">
+            		<form id="share-form">
+              			<h1>Share with</h1>
+              			<label for="share-email">Email</label>
+              			<input type="email" name="email" id="share-email" placeholder="you@domain.com">
+            			<div class="form-submit">
+			        		<button class="submit-btn" role="submit" id="share-btn">Share</button>
+              			</div>
             		</form>
           		</div>
         	</div>

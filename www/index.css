@@ -208,13 +208,24 @@ footer {
   display: flex;
   flex-direction: row;
 }
-#input-form button {
+#input-form .btnadd {
   width: 40px;
   height: 40px;
   background-color: #7CB342;
   color: white;
   font-size: 30px;
   border: 1px #7CB342 solid;
+  border-radius: 5%;
+  outline: none;
+  font-variant-position: center;
+}
+#input-form .btnshare {
+  width: 40px;
+  height: 40px;
+  background-color: #808080;
+  color: white;
+  font-size: 30px;
+  border: 1px #808080 solid;
   border-radius: 5%;
   outline: none;
   font-variant-position: center;
@@ -293,3 +304,59 @@ footer {
   visibility: hidden;
 }
 
+#share {
+  visibility: collapse;
+  background-color: rgba(0, 0, 0, 0.5);
+  position: absolute;
+  top: 0;
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+#share .form-container {
+  min-width: 50vw;
+  max-width: 55vw;
+  min-height: 50vh;
+  max-height: 60vh;
+  background-color: white;
+  overflow: hidden;
+  padding: 10px;
+  border-radius: 4px;
+  box-shadow: -2px 2px 4px #000000;
+  color: #87ae40;
+}
+#share .form-container h1 {
+  text-align: center;
+  color: #cbdfa8;
+}
+#share .form-container label {
+  display: block;
+  padding: 10px 0;
+  box-sizing: border-box;
+}
+#share .form-container input {
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  padding: 10px 5px;
+  border: 1px solid #b5d183;
+  border-radius: 4px;
+}
+#share .form-container .form-submit {
+  margin-top: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+#share .form-container .share-btn {
+  padding: 10px;
+  background: transparent;
+  border: 1px solid #b5d183;
+  border-radius: 4px;
+}
+
+#shared {
+  visibility: visible;
+}
